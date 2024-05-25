@@ -16,9 +16,8 @@ if ! [[ "$PIXELS" =~ ^-?[0-9]+$ ]]; then
   exit 1
 fi
 
-SCREEN_WIDTH_OFFSET="${2:-40}" # Second argument
+SCREEN_WIDTH_OFFSET="${2:-40}"
 WINDOW_OFFSET="${3:-20}"
-start_time=$(date +%s%3N)
 
 
 # Lock file to prevent parallel execution
@@ -34,9 +33,8 @@ if [ "$RESIZE_WITH_RIGHT_BUTTON_PREFERENCE" == "true" ]; then
   RESIZE_MOUSE_BUTTON=3
 fi
 
-echo "RESIZE_WITH_RIGHT_BUTTON_PREFERENCE $RESIZE_WITH_RIGHT_BUTTON_PREFERENCE mouse button $RESIZE_MOUSE_BUTTON"
 exec 200>$LOCKFILE
-flock -w 1 200 || { echo "Another instance is running. Exiting."; >>/tmp/resize.log; exit 1; }
+flock -w 1 200 || { echo "Another instance is running. Exiting."; exit 1; }
 
 # Store original mouse pointer location to restore later
 mouse_location=$(xdotool getmouselocation --shell)
@@ -75,7 +73,6 @@ get_screen_info() {
 
 
 SCREEN_INFO=$(get_screen_info)
-
 
 declare -A SCREEN_DIMENSIONS
 
@@ -268,7 +265,6 @@ if [ -z "${PIXELS_X:-}" ] || [ -z "${PIXELS_Y:-}" ]; then
 fi
 
 NEW_WINDOW_WIDTH=$(( NEW_WINDOW_END_X - NEW_WINDOW_START_X))
-echo "Pixels: $PIXELS NEW_WINDOW_WIDTH: $NEW_WINDOW_WIDTH WINDOW_WIDTH: $WINDOW_WIDTH"
 if [ $PIXELS -gt 0 ] && [ $NEW_WINDOW_WIDTH -lt $WINDOW_WIDTH ]; then
   echo "[nearest corner: $nearest_corner] It was supposed to grow window but new size is smaller (movement was going to be $PIXELS_X ($MOVEMENT_DIRECTION_X)"
   echo "Original Window geometry x: $X, x_end: $(( X + WIDTH)) width: $WIDTH"
@@ -283,8 +279,6 @@ if [ $PIXELS -lt 0 ] && [ $NEW_WINDOW_WIDTH -gt $WINDOW_WIDTH ]; then
   exit 1;
 fi
 
-
-echo "[nearest corner: $nearest_corner] Moving $PIXELS_X horizontal" >> /tmp/resize.log
 SLEEP_TIME=0.02
 
 xdotool mousemove $MOUSE_TARGET_X $MOUSE_TARGET_Y
@@ -302,5 +296,3 @@ window_geometry=$(xdotool getwindowgeometry --shell $WINDOW_ID)
 eval "$window_geometry"
 echo "Wanted window geometry $NEW_WINDOW_START_X $NEW_WINDOW_WIDTH"
 echo "New Window geometry $X $WIDTH"
-end_time=$(date +%s%3N)
-echo "Total time: $((end_time - start_time)) ms"
